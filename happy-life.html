@@ -442,12 +442,12 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:system-u
   <div class="body" style="padding:16px">
     <div class="tabs" style="position:relative;top:0"><button id="lg-tab-m" class="on" onclick="setLoginMode('mobile')">Mobile</button><button id="lg-tab-e" onclick="setLoginMode('email')">Email</button></div>
     <input id="lg-id" class="textarea" style="min-height:0;height:52px;margin:16px 0 0" type="tel" placeholder="Mobile number (+91...)">
-    <div style="margin-top:14px"><button class="btn" style="width:100%" onclick="sendOtp()">OTP bhejo</button></div>
+    <input id="lg-pass" class="textarea" style="min-height:0;height:52px;margin:0 0 14px;display:none" type="password" placeholder="Password (email ke liye)"><div style="margin-top:14px"><button id="lg-send" class="btn" style="width:100%" onclick="sendOtp()">OTP bhejo</button></div><div id="recaptcha-box"></div>
     <div id="lg-otp-box" style="display:none;margin-top:16px">
       <input id="lg-otp" class="textarea" style="min-height:0;height:52px;margin:0" type="tel" placeholder="OTP daalo (demo: 1234)" maxlength="4">
       <div style="margin-top:14px"><button class="btn" style="width:100%" onclick="doLogin()">Login karo</button></div>
     </div>
-    <p class="muted" style="margin-top:16px">Demo mode: asli SMS nahi jayega. OTP hamesha 1234 hai.</p>
+    <p class="muted" style="margin-top:16px">Mobile par asli SMS OTP aayega. Email se login ke liye password daalo.</p>
   </div>
 </section>
 <section class="screen" id="s-backup">
@@ -471,6 +471,9 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:system-u
 <div class="toast" id="toast"></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/compat/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/compat/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/compat/firebase-firestore-compat.js"></script>
 <script>
 const COLORS=['#c0392b','#8e44ad','#16a085','#d35400','#2980b9','#27ae60','#b03a2e','#7d3c98'];
 const colorOf=n=>COLORS[[...n].reduce((a,c)=>a+c.charCodeAt(0),0)%COLORS.length];
@@ -562,7 +565,7 @@ document.querySelector('#nav .plus').parentElement; // keep
 document.querySelector('#nav button[data-t="create"]').onclick=()=>go('create');
 
 function enter(){go('login')}
-function logout(){S.user=null;saveData();toast('Logged out');setTimeout(()=>go('splash'),400)}
+function logout(){auth.signOut();toast('Logged out')}
 
 let feedMode='all';
 function feedTab(btn,mode){feedMode=mode;btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderFeed(mode)}
@@ -817,6 +820,11 @@ function sendVGift(k,i){
   renderVChat();toast(`${e} ${n} bheja ${to} ko`);
 }
 let loginMode='mobile';
+const FB_CONFIG={apiKey:'AIzaSyAciOUtZsrDJ4Wll75PRiYFMAb4tUXbOUY',authDomain:'happy-life-2ec4d.firebaseapp.com',projectId:'happy-life-2ec4d',storageBucket:'happy-life-2ec4d.firebasestorage.app',messagingSenderId:'379055254671'};
+firebase.initializeApp(FB_CONFIG);
+const auth=firebase.auth();
+const db=firebase.firestore();
+let uid=null, confirmation=null, lastSaved='';
 function setLoginMode(m){
   loginMode=m;
   document.getElementById('lg-tab-m').classList.toggle('on',m==='mobile');
@@ -825,24 +833,86 @@ function setLoginMode(m){
   f.type=m==='mobile'?'tel':'email';
   f.placeholder=m==='mobile'?'Mobile number (+91...)':'Email address';
   f.value='';
+  document.getElementById('lg-pass').style.display=m==='email'?'block':'none';
   document.getElementById('lg-otp-box').style.display='none';
+  document.getElementById('lg-send').textContent=m==='mobile'?'OTP bhejo':'Login / Register karo';
 }
-function sendOtp(){
+function errMsg(e){
+  const m={
+    'auth/invalid-phone-number':'Mobile number galat hai',
+    'auth/too-many-requests':'Bahut zyada koshish. Thodi der baad try karo',
+    'auth/quota-exceeded':'Aaj ke SMS khatam ho gaye. Firebase billing chahiye',
+    'auth/invalid-email':'Email galat hai',
+    'auth/weak-password':'Password kamzor hai (6 akshar ya zyada)',
+    'auth/email-already-in-use':'Ye email pehle se hai, sahi password daalo',
+    'auth/wrong-password':'Password galat hai',
+    'auth/operation-not-allowed':'Ye login method Firebase mein on nahi hai',
+    'auth/unauthorized-domain':'Ye domain Firebase mein authorized nahi hai',
+    'auth/invalid-verification-code':'OTP galat hai',
+    'auth/code-expired':'OTP expire ho gaya, dobara bhejo'
+  };
+  return m[e.code]||('Error: '+(e.message||e.code));
+}
+async function sendOtp(){
   const v=document.getElementById('lg-id').value.trim();
-  const ok=loginMode==='mobile'?v.replace(/\D/g,'').length>=10:/^\S+@\S+\.\S+$/.test(v);
-  if(!ok){toast(loginMode==='mobile'?'Sahi mobile number daalo':'Sahi email daalo');return}
-  document.getElementById('lg-otp-box').style.display='block';
-  toast('Demo OTP: 1234');
+  try{
+    if(loginMode==='mobile'){
+      const d=v.replace(/\D/g,'');
+      if(d.length<10){toast('Sahi mobile number daalo');return}
+      if(!window.recaptcha)window.recaptcha=new firebase.auth.RecaptchaVerifier('recaptcha-box',{size:'invisible'});
+      confirmation=await auth.signInWithPhoneNumber('+91'+d.slice(-10),window.recaptcha);
+      document.getElementById('lg-otp-box').style.display='block';
+      toast('OTP bheja gaya');
+    }else{
+      const p=document.getElementById('lg-pass').value;
+      if(!/^\S+@\S+\.\S+$/.test(v)){toast('Sahi email daalo');return}
+      if(p.length<6){toast('Password kam se kam 6 akshar ka ho');return}
+      try{
+        await auth.signInWithEmailAndPassword(v,p);
+      }catch(e){
+        if(e.code==='auth/user-not-found'||e.code==='auth/invalid-credential'){
+          await auth.createUserWithEmailAndPassword(v,p);
+        }else throw e;
+      }
+    }
+  }catch(e){
+    try{if(window.recaptcha)window.recaptcha.clear()}catch(_){}
+    window.recaptcha=null;
+    toast(errMsg(e));
+  }
 }
-function doLogin(){
+async function doLogin(){
   const o=document.getElementById('lg-otp').value.trim();
-  if(o!=='1234'){toast('OTP galat hai (demo: 1234)');return}
-  S.user=document.getElementById('lg-id').value.trim();
-  saveData();go('home');toast('Login ho gaya');
+  if(!confirmation){toast('Pehle OTP bhejo');return}
+  try{
+    await confirmation.confirm(o);
+    confirmation=null;
+  }catch(e){toast(errMsg(e))}
 }
+auth.onAuthStateChanged(async u=>{
+  if(u){
+    uid=u.uid;
+    try{
+      const snap=await db.collection('users').doc(uid).get();
+      if(snap.exists)applyData(snap.data());
+    }catch(e){}
+    S.user=u.phoneNumber||u.email||'User';
+    saveData();
+    renderSeats();
+    go('home');
+  }else{
+    uid=null;
+    S.user=null;
+    go('splash');
+  }
+});
 const KEY='happylife-v1';
 function saveData(){
-  try{localStorage.setItem(KEY,JSON.stringify({user:S.user,dia:S.dia,feed:S.feed,chats:S.chats,msgs:S.msgs,rented:S.rented,vlog:vlog}))}catch(e){}
+  const json=JSON.stringify({user:S.user,dia:S.dia,feed:S.feed,chats:S.chats,msgs:S.msgs,rented:S.rented,vlog:vlog});
+  if(json===lastSaved)return;
+  lastSaved=json;
+  try{localStorage.setItem(KEY,json)}catch(e){}
+  if(uid){db.collection('users').doc(uid).set(JSON.parse(json)).catch(()=>{})}
 }
 function applyData(d){
   S.user=d.user===undefined?null:d.user;
@@ -872,7 +942,7 @@ function restoreBackup(){
 renderSeats();
 setInterval(saveData,2000);
 addEventListener('pagehide',saveData);
-if(loadData()&&S.user){renderSeats();go('home')}else go('splash');
+loadData();renderSeats();go('splash');
 </script>
 </body>
 </html>
