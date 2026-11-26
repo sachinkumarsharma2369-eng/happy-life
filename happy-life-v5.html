@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<script>
+window.addEventListener('error',function(e){
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;top:0;left:0;right:0;background:#900;color:#fff;padding:10px;z-index:999;font:13px sans-serif;white-space:pre-wrap';
+  d.textContent='ERROR: '+e.message+' (line '+e.lineno+')';
+  document.body.appendChild(d);
+});
+window.addEventListener('unhandledrejection',function(e){
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#900;color:#fff;padding:10px;z-index:999;font:13px sans-serif;white-space:pre-wrap';
+  d.textContent='PROMISE ERROR: '+(e.reason&&(e.reason.code||e.reason.message)||e.reason);
+  document.body.appendChild(d);
+});
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1030">
+<title>Happy Life</title>
+<style>
+:root{--bg:#0b1030;--card:#141a3d;--card2:#1b2350;--txt:#f2f4ff;--sub:#9aa3c7;--pink:#ff2d7a;--orange:#ffa62b;--blue:#2f7bff;--purple:#8b3dff;--green:#22c55e;--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:system-ui,"Segoe UI","Noto Sans Devanagari",sans-serif;overflow:hidden}
+#app{height:100%;max-width:480px;margin:0 auto;position:relative;background:var(--bg)}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;padding-top:var(--safe-top);background:var(--bg)}
+.screen.active{display:flex}
+.body{flex:1;overflow-y:auto;padding-bottom:calc(70px + var(--safe-bot))}
+.hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg);border-bottom:1px solid #ffffff12;position:sticky;top:0;z-index:2}
+.hdr h2{font-size:18px;flex:1}
+.ib{background:none;border:0;color:var(--txt);font-size:20px;width:36px;height:36px;border-radius:50%;cursor:pointer}
+.ib:active{background:#ffffff16}
+.logo{font-weight:800;font-size:20px;color:var(--txt)}
+.logo span{color:var(--orange)}
+.badge{background:var(--pink);color:#fff;font-size:10px;border-radius:10px;padding:1px 6px;margin-left:4px;vertical-align:top}
+.av{width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:16px;border:2px solid var(--pink)}
+.av.sm{width:34px;height:34px;font-size:13px;border-width:1px}
+.av.lg{width:96px;height:96px;font-size:34px;border-width:3px;border-color:#fff}
+.btn{border:0;border-radius:24px;padding:12px 18px;color:#fff;font-weight:700;font-size:15px;cursor:pointer;background:linear-gradient(90deg,var(--pink),var(--orange))}
+.btn.blue{background:linear-gradient(90deg,#2f7bff,#4fa3ff)}
+.btn.ghost{background:var(--card2)}
+.btn.red{background:#e11d48}
+.btn:disabled{opacity:.5}
+.card{background:var(--card);border-radius:14px;margin:0 12px 12px;overflow:hidden}
+.muted{color:var(--sub);font-size:13px}
+.tabs{display:flex;border-bottom:1px solid #ffffff12;background:var(--bg);position:sticky;top:53px;z-index:1}
+.tabs button{flex:1;background:none;border:0;color:var(--sub);padding:12px 0;font-size:14px;cursor:pointer;border-bottom:2px solid transparent}
+.tabs button.on{color:var(--pink);border-color:var(--pink);font-weight:700}
+.stories{display:flex;gap:12px;overflow-x:auto;padding:12px 14px;scrollbar-width:none}
+.story{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--sub);flex-shrink:0;width:60px}
+.story .av{width:54px;height:54px}
+.post{padding:12px 14px;border-bottom:8px solid var(--bg);background:var(--card)}
+.post-h{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.post-h b{font-size:14px}
+.post-img{height:190px;border-radius:12px;margin:8px 0;display:flex;align-items:flex-end;padding:10px;font-size:12px;color:#fff;background:linear-gradient(160deg,#ff9a3c,#ff3d7f 45%,#3b1d7a)}
+.post-act{display:flex;gap:18px;align-items:center;font-size:14px;color:var(--sub)}
+.post-act button{background:none;border:0;color:var(--sub);font-size:14px;cursor:pointer}
+.post-act .liked{color:var(--pink)}
+.item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #ffffff10;cursor:pointer}
+.item:active{background:#ffffff08}
+.item .grow{flex:1;min-width:0}
+.item .nm{font-weight:600;font-size:15px}
+.item .pv{font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .tm{font-size:11px;color:var(--sub);text-align:right}
+.unread{background:var(--pink);color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;margin-top:4px;display:inline-block}
+.search{margin:12px;background:var(--card);border-radius:24px;padding:10px 16px;display:flex;gap:8px;align-items:center;color:var(--sub)}
+.search input{flex:1;background:none;border:0;color:var(--txt);outline:none;font-size:14px}
+.msgs{padding:12px;display:flex;flex-direction:column;gap:8px}
+.bub{max-width:75%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.4;word-wrap:break-word}
+.bub.in{background:var(--card2);align-self:flex-start;border-bottom-left-radius:4px}
+.bub.out{background:linear-gradient(90deg,var(--purple),var(--blue));align-self:flex-end;border-bottom-right-radius:4px}
+.bub small{display:block;font-size:10px;color:#ffffffaa;margin-top:3px;text-align:right}
+.bub .who{font-size:11px;color:var(--orange);font-weight:700;margin-bottom:2px}
+.bub.photo{padding:4px}
+.bub.photo div{width:200px;height:120px;border-radius:10px;background:linear-gradient(160deg,#ff9a3c,#3b1d7a)}
+.composer{position:fixed;bottom:calc(64px + var(--safe-bot));left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;gap:8px;padding:8px 10px;background:var(--card);border-top:1px solid #ffffff12}
+.composer input{flex:1;background:var(--card2);border:0;border-radius:20px;padding:10px 14px;color:var(--txt);outline:none;font-size:14px}
+.composer .btn{padding:10px 14px}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;background:var(--card);border-top:1px solid #ffffff12;padding-bottom:var(--safe-bot);z-index:5}
+.nav button{flex:1;background:none;border:0;color:var(--sub);padding:8px 0 10px;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nav button .ic{font-size:20px}
+.nav button.on{color:var(--pink)}
+.nav .plus{width:42px;height:34px;border-radius:12px;background:linear-gradient(90deg,var(--pink),var(--purple));color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto}
+.prof-top{background:linear-gradient(180deg,#f57c3a,#6d2e8f 60%,var(--bg));height:150px;position:relative}
+.prof-info{text-align:center;margin-top:-48px;padding:0 16px}
+.prof-info .av{margin:0 auto}
+.stats{display:flex;justify-content:space-around;margin:14px 0;text-align:center}
+.stats b{display:block;font-size:17px}
+.stats span{font-size:12px;color:var(--sub)}
+.row2{display:flex;gap:8px;padding:0 14px;align-items:center}
+.row2 .btn{flex:1}
+.quick{display:flex;justify-content:space-around;padding:14px 8px}
+.quick div{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--sub);cursor:pointer}
+.quick .c{width:48px;height:48px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.grid3 div{aspect-ratio:1;background:linear-gradient(160deg,#ff9a3c,#3b1d7a)}
+.grid3 div:nth-child(2n){background:linear-gradient(160deg,#2f7bff,#8b3dff)}
+.grid3 div:nth-child(3n){background:linear-gradient(160deg,#22c55e,#0b1030)}
+.tabs2{display:flex;justify-content:space-around;border-bottom:1px solid #ffffff12;margin-top:10px}
+.tabs2 button{background:none;border:0;color:var(--sub);padding:10px;font-size:14px;cursor:pointer}
+.tabs2 .on{color:var(--pink);border-bottom:2px solid var(--pink);font-weight:700}
+.textarea{width:calc(100% - 24px);margin:12px;min-height:160px;background:var(--card);border:0;border-radius:14px;color:var(--txt);padding:14px;font-size:15px;outline:none;resize:none}
+.seats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:14px 10px}
+.seat{text-align:center;font-size:11px;color:var(--sub)}
+.seat .av{margin:0 auto 4px;width:56px;height:56px}
+.seat.host .av{border-color:var(--orange)}
+.ctrl{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;gap:10px;justify-content:center;align-items:center;padding:14px 10px calc(14px + var(--safe-bot));background:var(--card)}
+.round{width:46px;height:46px;border-radius:50%;border:0;background:var(--card2);color:#fff;font-size:18px;cursor:pointer}
+.round.on{background:var(--blue)}
+.round.red{background:#e11d48}
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px}
+.vtile{aspect-ratio:3/4;border-radius:12px;position:relative;display:flex;align-items:flex-end;padding:8px;font-size:12px;color:#fff;font-weight:600}
+.vtile::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 60%,#0008);border-radius:12px}
+.vtile span{position:relative;z-index:1}
+.gcard{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px}
+.gift{background:var(--card);border-radius:14px;padding:12px 6px;text-align:center;cursor:pointer;border:0;color:var(--txt)}
+.gift .e{font-size:30px}
+.gift .n{font-size:12px;margin-top:4px}
+.gift .p{font-size:12px;color:var(--blue);margin-top:2px}
+.ludo{margin:12px;border-radius:16px;height:200px;background:conic-gradient(from 45deg,#e11d48,#f59e0b,#22c55e,#2f7bff,#e11d48);display:flex;align-items:center;justify-content:center;font-size:44px;position:relative}
+.ludo .dice{background:#fff;color:#000;width:72px;height:72px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 6px 16px #0008}
+.list{margin:0 12px}
+.menu{display:flex;align-items:center;gap:14px;padding:15px 16px;border-bottom:1px solid #ffffff10;cursor:pointer;font-size:15px}
+.menu .ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.menu .r{margin-left:auto;color:var(--sub)}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:24px}
+.splash{background:linear-gradient(180deg,#0b1030,#3b1d7a 55%,#ff7a3c);justify-content:space-between;padding:50px 24px 36px}
+.splash h1{font-size:44px;font-weight:800}
+.splash h1 span{color:var(--orange)}
+.heart{font-size:72px}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#fff;color:#111;padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;z-index:99;white-space:nowrap}
+.toast.show{opacity:1}
+.btn.sm{padding:6px 10px;font-size:12px}
+.sheet-bg{position:fixed;inset:0;background:#0009;display:none;align-items:flex-end;justify-content:center;z-index:50}
+.sheet-bg.open{display:flex}
+.sheet{width:100%;max-width:480px;background:var(--card);border-radius:20px 20px 0 0;padding:14px 14px calc(18px + var(--safe-bot));animation:up .25s}
+@keyframes up{from{transform:translateY(100%)}}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-size:17px;font-weight:700}
+.sheet-g{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sheet-g button{background:var(--card2);border:0;border-radius:14px;color:var(--txt);padding:12px 4px;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
+.sheet-g button span{font-size:24px}
+#s-voice{background:linear-gradient(180deg,#14307a,#0b1030 45%,#070b22)}
+.vr-top{display:flex;align-items:center;gap:4px;padding:10px 8px}
+.vr-info{flex:1;min-width:0}
+.vr-trophy{margin:4px 14px 0;display:inline-block;background:#0008;border-radius:14px;padding:4px 12px;color:#ffd34d;font-weight:700;font-size:13px;cursor:pointer}
+.vr-host{text-align:center;margin:12px 0 6px}
+.ring{width:58px;height:58px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;box-shadow:0 0 0 3px #ffd34d,0 0 12px #ffb020;cursor:pointer}
+.ring.big{width:112px;height:112px;font-size:30px;box-shadow:0 0 0 4px #ffd34d,0 0 22px #ffb020}
+.ring.empty{background:#ffffff12;color:#9aa3c7;box-shadow:0 0 0 2px #ffffff33;font-size:24px}
+.vr-hname{margin-top:8px;font-weight:700;font-size:14px}
+.vr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;padding:10px 8px}
+.vr-seat{text-align:center;font-size:11px;color:#dfe5ff;cursor:pointer;position:relative}
+.vr-n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr-mic{position:absolute;top:40px;right:12px;font-size:11px}
+.vr-chat{padding:6px 14px}
+.vr-line{font-size:13px;margin:4px 0;color:#fff}
+.vr-line b{color:var(--orange)}
+#s-voice{background:#0b1f5c !important}
+.vs-top{display:flex;align-items:center;gap:6px;padding:10px 10px;background:#0b1f5c}
+.vs-title{flex:1;min-width:0}
+.vs-title b{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.vs-sub{font-size:12px;color:#cfe0ff;display:flex;align-items:center;gap:6px;margin-top:2px}
+.vs-tag{background:linear-gradient(90deg,#1e6bff,#4fc3ff);border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;color:#fff}
+.vs-seats{background:radial-gradient(ellipse at top,#1e3f9c,#0b1f5c 75%);padding:14px 10px 18px}
+.vs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px}
+.vs-slot{display:flex;flex-direction:column;align-items:center;font-size:11px;color:#fff;text-align:center;cursor:pointer}
+.vs-av{width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px;box-shadow:0 0 0 3px #ffd34d,0 0 14px #ffb020}
+.vs-req{width:74px;height:74px;border-radius:50%;background:#c9c9cf;display:flex;align-items:center;justify-content:center;font-size:36px;color:#333;box-shadow:0 0 0 2px #fff}
+.vs-dash{width:74px;height:74px;border-radius:50%;border:2px dashed #ffffff90}
+.vs-n{margin-top:6px;max-width:82px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vs-pin{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#0b1f5c;color:#fff;font-size:14px;border-top:1px solid #ffffff22}
+.vs-pin b{flex:1}
+.vs-msgs{flex:1;overflow-y:auto;padding:10px 10px 4px;background:linear-gradient(180deg,#2a1e18,#120a08);min-height:200px}
+.vm{display:flex;gap:10px;margin-bottom:12px}
+.vm-av{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.vm-b{background:#ffffff14;border-radius:12px;padding:8px 12px;color:#fff;font-size:14px;flex:1;min-width:0;word-wrap:break-word}
+.vm-h{display:flex;align-items:center;gap:6px;font-size:12px;color:#ddd}
+.vm-h b{color:#fff;font-size:13px}
+.vm-lv{background:#ff8a00;color:#fff;border-radius:6px;padding:0 5px;font-size:10px;font-weight:700}
+.vm-t{margin-left:auto;font-size:11px;color:#bbb}
+.vs-gifts{display:flex;gap:8px;overflow-x:auto;padding:8px 10px;background:#0b1f5c;scrollbar-width:none}
+.vs-gifts button{flex-shrink:0;background:#ffffff14;border:0;border-radius:12px;color:#fff;padding:6px 10px;font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center}
+.vs-gifts button span{font-size:22px}
+.vs-bar{display:flex;align-items:center;gap:8px;padding:8px 10px calc(8px + var(--safe-bot));background:#0b1f5c}
+.vs-bal{background:#ffffff18;border-radius:12px;padding:6px 8px;color:#fff;font-size:13px;font-weight:700;white-space:nowrap}
+.vs-input{flex:1;background:#fff;border-radius:22px;padding:10px 14px;border:0;outline:none;font-size:14px;min-width:0}
+.vs-ic{background:none;border:0;font-size:22px;cursor:pointer;color:#fff;padding:2px}
+.vr-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;gap:10px;justify-content:center;align-items:center;padding:12px 10px calc(12px + var(--safe-bot));background:#0009}
+.lv{background:#eef0f4 !important;color:#111}
+.lvh{display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff}
+.lvh h1{flex:1;font-size:26px;font-weight:700}
+.lvh button{background:none;border:0;font-size:22px;cursor:pointer}
+.lvtabs{display:flex;background:#fff;border-bottom:1px solid #ddd}
+.lvtabs button{flex:1;background:none;border:0;padding:14px;font-size:16px;color:#777;cursor:pointer;border-bottom:3px solid transparent}
+.lvtabs button.on{color:#0b5cad;border-color:#0b5cad;font-weight:700}
+.lvsec{display:flex;align-items:center;gap:10px;padding:16px;font-size:20px;font-weight:600;background:#e4e7ee}
+.lvsec a{margin-left:auto;color:#2563eb;font-size:15px;cursor:pointer}
+.lvgrid{display:flex;flex-wrap:wrap;background:#e4e7ee;padding:0 6px 6px}
+.lvrow{display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;border-bottom:1px solid #e5e5e5;cursor:pointer}
+.live{background:#e11d48;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:middle;animation:bl 1.2s infinite}
+@keyframes bl{50%{opacity:.5}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SPLASH -->
+<section class="screen" id="s-splash">
+  <div class="center" style="flex:1">
+    <div class="heart">💖</div>
+    <h1 style="margin-top:14px">Happy <span>Life</span></h1>
+    <p style="margin-top:14px;font-size:18px;color:#ffe">Connect · Share · Grow</p>
+    <p style="margin-top:8px;color:#ffd6">खुशियाँ बाँटें, दोस्ती बढ़ाएँ</p>
+  </div>
+  <div style="text-align:center">
+    <button class="btn" style="width:100%;padding:15px" onclick="enter()">Get Started</button>
+    <p class="muted" style="margin-top:14px">Already have an account? <b style="color:#fff;cursor:pointer" onclick="enter()">Login</b></p>
+  </div>
+</section>
+
+<!-- HOME -->
+<section class="screen" id="s-home">
+  <div class="hdr"><span class="logo">Happy <span>Life</span></span><span style="flex:1"></span>
+    <button class="ib" onclick="toast('Search coming soon')">🔍</button>
+    <button class="ib" onclick="toast('No new notifications')">🔔</button></div>
+  <div class="body">
+    <div class="stories">
+      <div class="story" onclick="toast('Story add karo')"><div class="av" style="background:#2f7bff;border-color:#2f7bff">+</div>Add Story</div>
+      <div class="story" onclick="toast('Story dekh rahe ho')"><div class="av" style="background:#c0392b">MR</div>My Story</div>
+      <div class="story"><div class="av" style="background:#8e44ad">RS</div>Riya</div>
+      <div class="story"><div class="av" style="background:#16a085">SK</div>Sunny</div>
+      <div class="story"><div class="av" style="background:#d35400">PO</div>Pooja</div>
+    </div>
+    <div class="tabs" style="position:relative;top:0">
+      <button class="on" onclick="feedTab(this,'all')">For You</button>
+      <button onclick="feedTab(this,'follow')">Following</button>
+      <button onclick="feedTab(this,'trend')">Trending</button>
+    </div>
+    <div id="feed"></div>
+  </div>
+</section>
+
+<!-- CHAT LIST -->
+<section class="screen" id="s-chat">
+  <div class="hdr"><h2>Chat</h2><button class="ib" onclick="toast('Search coming soon')">🔍</button></div>
+  <div class="body">
+    <div class="search">🔍 <input placeholder="Search friends or groups"></div>
+    <div id="chatlist"></div>
+  </div>
+</section>
+
+<!-- CHAT ROOM (1-1 and group) -->
+<section class="screen" id="s-room">
+  <div class="hdr"><button class="ib" onclick="go('chat')">←</button>
+    <div class="av sm" id="room-av"></div>
+    <div style="flex:1;min-width:0"><div id="room-name" style="font-weight:700;font-size:16px"></div><div class="muted" id="room-sub"></div></div>
+    <button class="ib" onclick="openSheet()">➕</button><button class="ib" onclick="toast('Video call ke liye follow karna zaroori hai')">📹</button>
+  </div>
+  <div class="body" id="room-body"><div class="msgs" id="msgs"></div></div>
+  <div class="composer">
+    <button class="ib" onclick="sendPhoto()">🖼️</button>
+    <input id="msgin" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg()">
+    <button class="btn" onclick="sendMsg()">➤</button>
+  </div>
+</section>
+
+<!-- PROFILE -->
+<section class="screen" id="s-profile">
+  <div class="hdr"><h2>Profile</h2><button class="ib" onclick="go('more')">⚙️</button></div>
+  <div class="body">
+    <div class="prof-top"></div>
+    <div class="prof-info">
+      <div class="av lg" style="background:#444">SK</div>
+      <h3 style="margin-top:8px;font-size:19px">Sachin Kumar Sharma</h3>
+      <p class="muted">@sachin_king</p>
+      <p style="margin-top:6px;font-size:14px">Dreamer | Music Lover | Life is Beautiful ❤️</p>
+    </div>
+    <div class="stats"><div><b>356</b><span>Posts</span></div><div><b id="p-fol">2.4K</b><span>Followers</span></div><div><b>1.2K</b><span>Following</span></div></div>
+    <div class="row2"><button class="btn ghost" onclick="toast('Edit profile coming soon')">Edit Profile</button><button class="btn ghost" style="flex:0" onclick="go('more')">⚙️</button></div>
+    <div class="quick">
+      <div onclick="toast('Photos')"><span class="c" style="background:#2f7bff33">🖼️</span>Photos</div>
+      <div onclick="toast('Videos')"><span class="c" style="background:#8b3dff33">🎬</span>Videos</div>
+      <div onclick="toast('Likes')"><span class="c" style="background:#ff2d7a33">❤️</span>Likes</div>
+      <div onclick="toast('Saved')"><span class="c" style="background:#22c55e33">🔖</span>Saved</div>
+    </div>
+    <div class="tabs2"><button class="on">Posts</button><button>Reels</button><button>Tagged</button></div>
+    <div class="grid3"><div></div><div></div><div></div><div></div><div></div><div></div></div>
+  </div>
+</section>
+
+<!-- CREATE -->
+<section class="screen" id="s-create">
+  <div class="hdr"><button class="ib" onclick="go('home')">✕</button><h2>New Post</h2><button class="btn" style="padding:8px 14px" onclick="publish()">Post</button></div>
+  <div class="body">
+    <textarea class="textarea" id="newpost" placeholder="Kya chal raha hai? Apni khushi share karo..."></textarea>
+    <div class="list" style="display:flex;gap:10px">
+      <button class="btn ghost" style="flex:1" onclick="toast('Photo select (demo)')">🖼️ Photo</button>
+      <button class="btn ghost" style="flex:1" onclick="toast('Video select (demo)')">🎬 Video</button>
+    </div>
+  </div>
+</section>
+
+<!-- GROUPS -->
+<section class="screen" id="s-groups">
+  <div class="hdr"><h2>Groups</h2><button class="ib" onclick="toast('Group create (demo)')">＋</button></div>
+  <div class="body" id="grouplist"></div>
+</section>
+
+<section class='screen' id='s-voice'>
+  <div class='vs-top'>
+    <button class='vs-ic' onclick='leaveVoice()'>←</button>
+    <div class='vs-title'><b id='vtitle'>Dil se Dil</b><div class='vs-sub'><span id='vonline'>2 Online</span><span class='vs-tag'>SUNRISE</span></div></div>
+    <button class='vs-ic' onclick='toast(`Friend add (demo)`)'>👤</button>
+    <button class='vs-ic' onclick='toast(`Room rank (demo)`)'>🏅</button>
+    <button class='vs-ic' onclick='leaveVoice()'>⋮</button>
+  </div>
+  <div class='vs-seats'><div class='vs-grid' id='seats'></div></div>
+  <div class='vs-pin' id='vpin'><b>+ Pin My Gift With 💎200</b><button class='vs-ic' onclick='toast(`Pin gift (demo)`)'>?</button><button class='vs-ic' onclick='hidePin()'>✕</button></div>
+  <div class='vs-msgs' id='vchat'></div>
+  <div class='vs-gifts'>
+    <button onclick='sendVGift(0,-1)'><span>🌹</span>Rose 5💎</button>
+    <button onclick='sendVGift(1,-1)'><span>❤️</span>Heart 10💎</button>
+    <button onclick='sendVGift(2,-1)'><span>🎆</span>Fireworks 20💎</button>
+    <button onclick='sendVGift(3,-1)'><span>🏍️</span>Bike 50💎</button>
+    <button onclick='sendVGift(4,-1)'><span>🚗</span>Car 100💎</button>
+  </div>
+  <div class='vs-bar'>
+    <div class='vs-bal' id='vbal'></div>
+    <input class='vs-input' id='vinput' placeholder='Type...' onkeydown='if(event.key==="Enter")sendVMsg()'>
+    <button class='vs-ic' id='vmic' onclick='toggleMic()'>🎙️</button>
+    <button class='vs-ic' onclick='openGiftPanel(-1)'>🎁</button>
+    <button class='vs-ic' onclick='sendVMsg()'>➤</button>
+  </div>
+</section>
+<section class='screen' id='s-voice-prev'>
+  <div class='vr-top'><button class='ib' onclick='leaveVoice()'>←</button>
+    <div class='vr-info'><b style='font-size:15px'>Voice Room</b></div>
+    
+    
+    
+  </div>
+  
+  <div class='body' style='padding-bottom:110px'>
+    
+    <div class='vr-grid' id='seats'></div>
+    
+  </div>
+  <div class='vr-bar'>
+    <button class='round' id='vmic' onclick='toggleMic()'>🎙️</button>
+    
+    <button class='round' onclick='openGiftPanel(-1)'>🎁</button>
+    <button class='btn blue' id='vjoin' onclick='toggleJoin()'>Join</button>
+    <button class='btn red' onclick='leaveVoice()'>Leave</button>
+  </div>
+</section>
+<!-- VOICE ROOM -->
+<section class='screen' id='s-voice-x'>
+  <div class="hdr"><button class="ib" onclick="leaveVoice()">←</button><h2>Voice Room</h2><button class="ib" onclick="toast('Room info')">ⓘ</button></div>
+  <div class="body" style="padding-bottom:110px">
+    <div class="card" style="margin-top:12px;padding:14px;display:flex;align-items:center;gap:10px">
+      <div style="flex:1"><b style="font-size:16px">Chill Vibes Room</b><div class="muted" id="vcount">13 Seats</div></div>
+      <button class="btn blue" id="vjoin" style="padding:8px 18px" onclick="toggleJoin()">Join</button>
+    </div>
+    <div class="seats-old" id="seats-old"></div>
+    <div id="vchat-old" style="padding:0 14px"></div>
+  </div>
+  <div class="ctrl">
+    <button class="round" id="vmic" onclick="toggleMic()">🎙️</button>
+    <button class="round" onclick="toast('Audio output')">🎧</button>
+    <button class="btn red" style="padding:12px 22px" onclick="leaveVoice()">Leave Room</button>
+    <button class="round" onclick="sendGift('Rose',5)">🎁</button>
+  </div>
+</section>
+
+<!-- VIDEO CALL -->
+<section class="screen" id="s-video" style="background:#05081a">
+  <div class="hdr" style="background:#05081a"><button class="ib" onclick="endCall()">←</button><h2>Video Call</h2><span></span></div>
+  <div class="body" style="padding-bottom:0"><p class="muted" style="padding:8px 14px">Video call sirf follow karne ke baad available hai.</p>
+    <div class="vgrid">
+      <div class="vtile" style="background:linear-gradient(160deg,#7c5a3c,#2b1a10)"><span>You</span></div>
+      <div class="vtile" style="background:linear-gradient(160deg,#c2567a,#6b2140)"><span>Riya</span></div>
+      <div class="vtile" style="background:linear-gradient(160deg,#4a6b8a,#14202d)"><span>Aman</span></div>
+      <div class="vtile" style="background:linear-gradient(160deg,#b0446c,#3b1a2b)"><span>Neha</span></div>
+    </div>
+    <div style="text-align:center;margin-top:6px"><span class="unread" id="timer">00:00</span></div>
+  </div>
+  <div class="ctrl">
+    <button class="round" onclick="this.classList.toggle('on')">🎙️</button>
+    <button class="round" onclick="this.classList.toggle('on')">📷</button>
+    <button class="round red" onclick="endCall()">📞</button>
+    <button class="round" onclick="toast('Camera flip')">🔄</button>
+  </div>
+</section>
+
+<!-- LUDO -->
+<section class="screen" id="s-ludo">
+  <div class="hdr"><button class="ib" onclick="go('home')">←</button><h2>Ludo</h2><button class="ib" onclick="toast('Settings')">⚙️</button></div>
+  <div class="body">
+    <div class="ludo"><div style="text-align:center"><div class="dice" id="dice">⚀</div><div style="font-size:18px;font-weight:800;margin-top:10px;text-shadow:0 2px 6px #000">Let's Play!</div></div></div>
+    <div style="padding:0 12px;display:flex;flex-direction:column;gap:10px">
+      <button class="btn" style="background:linear-gradient(90deg,#ffb020,#ffd34d);color:#222" onclick="quickMatch()">Quick Match</button>
+      <button class="btn blue" onclick="toast('Room banaya (demo)')">Create Room</button>
+      <button class="btn ghost" onclick="rollDice()">🎲 Dice roll karo</button>
+    </div>
+    <p class="muted" style="padding:14px 14px 6px">More Games</p>
+    <div class="gcard" style="grid-template-columns:repeat(4,1fr)">
+      <button class="gift" onclick="toast('Carrom (demo)')"><div class="e">🪀</div><div class="n">Carrom</div></button>
+      <button class="gift" onclick="toast('8 Ball Pool (demo)')"><div class="e">🎱</div><div class="n">8 Ball</div></button>
+      <button class="gift" onclick="toast('Puzzle (demo)')"><div class="e">🧩</div><div class="n">Puzzle</div></button>
+      <button class="gift" onclick="toast('Racing (demo)')"><div class="e">🏎️</div><div class="n">Racing</div></button>
+    </div>
+  </div>
+</section>
+
+<!-- GIFTS -->
+<section class="screen" id="s-gifts">
+  <div class="hdr"><button class="ib" onclick="go('more')">←</button><h2>Gifts &amp; Diamonds</h2></div>
+  <div class="body">
+    <div class="card" style="padding:14px;display:flex;align-items:center;gap:10px;margin-top:12px">
+      <span style="font-size:20px">💎</span><b style="font-size:20px" id="dia">1,250</b>
+      <button class="btn" style="margin-left:auto;padding:8px 16px" onclick="recharge()">Recharge</button>
+    </div>
+    <div class="tabs" style="position:relative;top:0">
+      <button class="on" onclick="giftTab(this,'g')">Gifts</button>
+      <button onclick="giftTab(this,'p')">Diamond Packages</button>
+    </div>
+    <div class="gcard" id="giftgrid"></div>
+  </div>
+</section>
+
+<!-- MORE -->
+<section class="screen" id="s-more">
+  <div class="hdr"><button class="ib" onclick="go('profile')">←</button><h2>More</h2></div>
+  <div class="body" style="padding-top:8px">
+    <div class="menu" onclick="go('gifts')"><span class="ic" style="background:#ffa62b33">👛</span>My Wallet<span class="r">💎 <span id="dia2">1,250</span></span></div>
+    <div class="menu" onclick="go('groups')"><span class="ic" style="background:#2f7bff33">👥</span>My Friends<span class="r">356</span></div>
+    <div class="menu" onclick="toast('Settings (demo)')"><span class="ic" style="background:#2f7bff33">⚙️</span>Settings<span class="r">›</span></div>
+    <div class="menu" onclick="toast('Help (demo)')"><span class="ic" style="background:#8b3dff33">❓</span>Help &amp; Support<span class="r">›</span></div>
+    <div class="menu" onclick="toast('Privacy Policy (demo)')"><span class="ic" style="background:#8b3dff33">🔒</span>Privacy Policy<span class="r">›</span></div>
+    <div class="menu" onclick="toast('Terms (demo)')"><span class="ic" style="background:#8b3dff33">📄</span>Terms &amp; Conditions<span class="r">›</span></div>
+    <div class="menu" onclick="go('backup')"><span class="ic" style="background:#22c55e33">💾</span>Backup &amp; Restore<span class="r">›</span></div>
+    <div class="menu" onclick="logout()" style="color:#ff5c7a"><span class="ic" style="background:#ff2d7a33">⏻</span>Logout</div>
+  </div>
+</section>
+
+<section class='screen lv' id='s-live'>
+  <div class='lvh'><h1>Live</h1>
+    <button onclick="toast('Coins')">🪙</button><button onclick="toast('Ranking')">🏆</button><button onclick="toast('Badges')">🎖️</button><button onclick="toast('Messages')">💬</button>
+  </div>
+  <div class='lvtabs'><button class='on'>⭐ Popular</button></div>
+  <div class='body' id='lvbody'></div>
+</section>
+<section class="screen" id="s-login">
+  <div class="hdr"><button class="ib" onclick="go('splash')">←</button><h2>Login</h2></div>
+  <div class="body" style="padding:16px">
+    <div class="tabs" style="position:relative;top:0"><button id="lg-tab-m" class="on" onclick="setLoginMode('mobile')">Mobile</button><button id="lg-tab-e" onclick="setLoginMode('email')">Email</button></div>
+    <input id="lg-id" class="textarea" style="min-height:0;height:52px;margin:16px 0 0" type="tel" placeholder="Mobile number (+91...)">
+    <input id="lg-pass" class="textarea" style="min-height:0;height:52px;margin:0 0 14px;display:none" type="password" placeholder="Password (email ke liye)"><div style="margin-top:14px"><button id="lg-send" class="btn" style="width:100%" onclick="sendOtp()">OTP bhejo</button></div><div id="recaptcha-box"></div>
+    <div id="lg-otp-box" style="display:none;margin-top:16px">
+      <input id="lg-otp" class="textarea" style="min-height:0;height:52px;margin:0" type="tel" placeholder="OTP daalo (demo: 1234)" maxlength="4">
+      <div style="margin-top:14px"><button class="btn" style="width:100%" onclick="doLogin()">Login karo</button></div>
+    </div>
+    <p class="muted" style="margin-top:16px">Mobile par asli SMS OTP aayega. Email se login ke liye password daalo.</p>
+  </div>
+</section>
+<section class="screen" id="s-backup">
+  <div class="hdr"><button class="ib" onclick="go('more')">←</button><h2>Backup &amp; Restore</h2></div>
+  <div class="body" style="padding:12px">
+    <p class="muted">Backup banao, text copy karke WhatsApp ya Notes mein save karo. Restore ke liye wahi text yahan paste karo.</p>
+    <textarea id="bk-text" class="textarea" style="margin:12px 0;min-height:200px;width:100%"></textarea>
+    <div style="display:flex;gap:10px"><button class="btn ghost" style="flex:1" onclick="makeBackup()">Backup banao</button><button class="btn" style="flex:1" onclick="restoreBackup()">Restore karo</button></div>
+  </div>
+</section>
+<!-- BOTTOM NAV -->
+<nav class="nav" id="nav">
+  <button data-t="home"><span class="ic">🏠</span>Home</button>
+  <button data-t="chat"><span class="ic">💬</span>Chat</button>
+  <button data-t="create"><span class="plus">+</span></button>
+  <button data-t="live" id="navgrp"><span class="ic">📡</span><span id="navlbl">Live</span></button>
+  <button data-t="profile"><span class="ic">👤</span>Profile</button>
+</nav>
+
+<div class="sheet-bg" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sheet"><div class="sheet-h"><span>Group Features</span><button class="ib" onclick="closeSheet()">✕</button></div><div class="sheet-g" id="sheetg"></div></div></div>
+<div class="toast" id="toast"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const COLORS=['#c0392b','#8e44ad','#16a085','#d35400','#2980b9','#27ae60','#b03a2e','#7d3c98'];
+const colorOf=n=>COLORS[[...n].reduce((a,c)=>a+c.charCodeAt(0),0)%COLORS.length];
+const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const av=(n,c='')=>`<div class="av ${c}" style="background:${colorOf(n)}">${ini(n)}</div>`;
+
+const S={
+  feed:[
+    {id:1,name:'Riya Sharma',time:'2h ago',text:'Zindagi khoobsurat hai, bas sahi logon ke saath har pal aur bhi special ho jata hai... ❤️ #Life #Smile',likes:2400,liked:false,comments:156,img:'Sunset Lake'},
+    {id:2,name:'Aman Kumar',time:'4h ago',text:'Dost ho to aise.... ❤️',likes:812,liked:false,comments:43,img:null}
+  ],
+  chats:[
+    {id:'riya',name:'Riya Sharma',last:'Hiii... kaise ho?',time:'9:21 PM',unread:3,group:false},
+    {id:'aman',name:'Aman Kumar',last:'Video call karu?',time:'8:45 PM',unread:1,group:false},
+    {id:'priya',name:'Priya Singh',last:'Ok bro 👍',time:'7:30 PM',unread:0,group:false},
+    {id:'happy',name:'Group Chat - Happy Friends',last:'Rohit: Good night 🌙',time:'6:45 PM',unread:12,group:true},
+    {id:'neha',name:'Neha Verma',last:'📷 Photo',time:'5:20 PM',unread:0,group:false},
+    {id:'love',name:'Love Chat ❤️',last:'Ravi: Kya kar rahe ho?',time:'4:10 PM',unread:5,group:true},
+    {id:'rohit',name:'Rohit Yadav',last:'Bhai kal milte hain',time:'2:15 PM',unread:0,group:false}
+  ],
+  msgs:{
+    riya:[{me:false,t:'Hiii... kaise ho?'},{me:true,t:'Main theek hoon! Tum batao'}],
+    aman:[{me:false,t:'Video call karu?'}],
+    happy:[{me:false,who:'Pooja',t:'Good morning sabhi ❤️'},{me:false,who:'Rohit',t:'Koi naya song share karo'},{me:false,who:'Neha',t:'Ye dekho 🔥',photo:true},{me:false,who:'Aman',t:'Nice 👍'},{me:false,who:'Sunny',t:'Khelte hain Ludo? 🎲'}]
+  },
+  groups:[
+    {name:'Happy Life Family',members:'1.2K Members'},
+    {name:'Happy Friends',members:'86 Members'},
+    {name:'Music Lovers',members:'430 Members'},
+    {name:'Ludo Champions',members:'910 Members'}
+  ],
+  seats:[
+    {n:'Riya',host:true,mic:true},{n:'Aman',mic:true},{n:'Neha',mic:true},{n:'Rohit',mic:true},
+    {n:'Pooja',mic:true},{n:'Sunny',mic:true},{n:'Priya',mic:true},{n:'Empty',empty:true}
+  ],
+  live:{g0:{host:'Riya Sharma',viewers:128},g2:{host:'Aman Kumar',viewers:37}},rented:{},
+  joined:false,micOn:true,dia:1250,
+  gifts:[['Rose','🌹',5],['Heart','❤️',10],['Fireworks','🎆',20],['Bike','🏍️',50],['Car','🚗',100],['Airplane','✈️',200],['Crown','👑',500],['Diamond','💎',1000],['Special Gift','🎁',5000]],
+  currentChat:null,callTimer:null,callSec:0
+};
+
+let SHEET=[];
+function openSheet(){
+  const c=S.currentChat, isG=c.group, i=isG?+c.id.slice(1):-1;
+  SHEET=[
+    ['📡',S.live[c.id]&&isG?'End Live':'Go Live',()=>isG?toggleLive(i):toast('Sirf group mein live ho sakte ho')],
+    ['🎙️','Voice Room',()=>go('voice')],
+    ['📹','Video Call',()=>startVideo()],
+    ['🎮','Ludo',()=>go('ludo')],
+    ['🎁','Gifts',()=>go('gifts')],
+    ['🖼️','Photo',()=>sendPhoto()],
+    ['🏠',isG&&S.rented[c.id]?'Rented ✅':'Rent Room',()=>isG?rentRoom(i):toast('Room rent sirf group mein hai')],
+    ['👥','Members',()=>toast('Members list (demo)')]
+  ];
+  document.getElementById('sheetg').innerHTML=SHEET.map((x,k)=>`<button onclick='runSheet(${k})'><span>${x[0]}</span>${x[1]}</button>`).join('');
+  document.getElementById('sheet').classList.add('open');
+}
+function closeSheet(){document.getElementById('sheet').classList.remove('open')}
+function runSheet(k){
+  const f=SHEET[k][2];
+  closeSheet();f();
+  if(S.currentChat)renderMsgs();
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),1800)}
+
+const SCREENS=['splash','home','chat','room','profile','create','groups','voice','video','ludo','gifts','more','live','login','backup'];
+const NAV_MAP={live:'live',home:'home',chat:'chat',room:'chat',create:'create',groups:'groups',voice:'groups',profile:'profile',more:'profile',gifts:'profile',ludo:'home',video:'chat'};
+function go(name){
+  SCREENS.forEach(s=>document.getElementById('s-'+s).classList.remove('active'));
+  const el=document.getElementById('s-'+name);
+  if(!el)return;
+  el.classList.add('active');
+  if(name==='splash'){document.getElementById('nav').style.display='none';return}
+  if(name==='login'||name==='backup'){document.getElementById('nav').style.display='none';return}
+  document.getElementById('nav').style.display=(name==='room'||name==='video'||name==='voice'||name==='ludo')?'none':'flex';
+  document.querySelectorAll('#nav button[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===NAV_MAP[name]));
+  if(name==='home')renderFeed('all');
+  if(name==='chat')renderChats();
+  if(name==='groups')renderGroups();
+  if(name==='live')renderLive();
+  if(name==='voice')renderSeats();
+  updateNavLive();
+  if(name==='profile')document.getElementById('p-fol').textContent=(2400+(S.followed?1:0)).toLocaleString('en-IN')==='2,401'?'2.4K':'2.4K';
+  if(name==='gifts')renderGifts();
+  if(name==='more')document.getElementById('dia2').textContent=S.dia.toLocaleString('en-IN');
+}
+document.querySelectorAll('#nav button[data-t]').forEach(b=>b.onclick=()=>go(b.dataset.t));
+document.querySelector('#nav .plus').parentElement; // keep
+document.querySelector('#nav button[data-t="create"]').onclick=()=>go('create');
+
+function enter(){go('login')}
+function logout(){auth.signOut();toast('Logged out')}
+
+let feedMode='all';
+function feedTab(btn,mode){feedMode=mode;btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderFeed(mode)}
+function renderFeed(mode){
+  let list=S.feed;
+  if(mode==='follow')list=S.feed.filter(p=>p.name==='Riya Sharma');
+  if(mode==='trend')list=[...S.feed].sort((a,b)=>b.likes-a.likes);
+  document.getElementById('feed').innerHTML=list.map(p=>`
+    <div class="post">
+      <div class="post-h">${av(p.name,'sm')}<div style="flex:1"><b>${p.name}</b><div class="muted">${p.time}</div></div><button class="ib" onclick="toast('Options')">⋯</button></div>
+      <div style="font-size:14px;line-height:1.5">${p.text}</div>
+      ${p.img?`<div class="post-img">${p.img}</div>`:''}
+      <div class="post-act" style="margin-top:6px">
+        <button class="${p.liked?'liked':''}" onclick="likePost(${p.id})">${p.liked?'❤️':'🤍'} ${fmt(p.likes)}</button>
+        <button onclick="toast('Comments (demo)')">💬 ${p.comments}</button>
+        <button onclick="share()">↗️</button>
+      </div>
+    </div>`).join('');
+}
+function fmt(n){return n>=1000?(n/1000).toFixed(1)+'K':String(n)}
+function likePost(id){const p=S.feed.find(x=>x.id===id);p.liked=!p.liked;p.likes+=p.liked?1:-1;renderFeed(feedMode)}
+function share(){toast('Share link copied (demo)')}
+
+function renderChats(){
+  document.getElementById('chatlist').innerHTML=S.chats.map(c=>`
+    <div class="item" onclick="openChat('${c.id}')">
+      ${av(c.name,'')}
+      <div class="grow"><div class="nm">${c.name}</div><div class="pv">${c.last}</div></div>
+      <div class="tm">${c.time}${c.unread?`<br><span class="unread">${c.unread}</span>`:''}</div>
+    </div>`).join('');
+}
+
+function openChat(id){
+  const c=S.chats.find(x=>x.id===id);
+  c.unread=0;
+  S.currentChat=c;
+  if(!S.msgs[id])S.msgs[id]=[{me:false,t:c.last.replace(/^.*: /,'')}];
+  document.getElementById('room-name').textContent=c.name;
+  document.getElementById('room-sub').textContent=c.group?'Group':'Online';
+  document.getElementById('room-av').outerHTML=`<div class="av sm" id="room-av" style="background:${colorOf(c.name)}">${ini(c.name)}</div>`;
+  go('room');
+  renderMsgs();
+}
+function renderMsgs(){
+  const list=S.msgs[S.currentChat.id]||[];
+  const L=S.live[S.currentChat.id];
+  document.getElementById('msgs').innerHTML=(L?liveBanner(L):'')+list.map(m=>{
+    if(m.photo)return `<div class="bub ${m.me?'out':'in'} photo"><div></div></div>`;
+    return `<div class="bub ${m.me?'out':'in'}">${(!m.me&&m.who)?`<div class="who">${m.who}</div>`:''}${m.t}</div>`;
+  }).join('');
+  const b=document.getElementById('room-body');b.scrollTop=b.scrollHeight;
+}
+function sendMsg(){
+  const i=document.getElementById('msgin');const t=i.value.trim();if(!t||!S.currentChat)return;
+  const id=S.currentChat.id;S.msgs[id].push({me:true,t});i.value='';renderMsgs();
+  setTimeout(()=>{S.msgs[id].push({me:false,who:S.currentChat.name.split(' ')[0],t:'👍 Got it!'});if(S.currentChat&&S.currentChat.id===id)renderMsgs()},1000);
+}
+function sendPhoto(){if(!S.currentChat)return;S.msgs[S.currentChat.id].push({me:true,photo:true});renderMsgs()}
+
+const gid=i=>'g'+i;
+function liveStrip(){
+  const ids=Object.keys(S.live);
+  if(!ids.length)return '<div class="muted" style="padding:14px">Abhi koi live nahi hai</div>';
+  return '<p style="padding:12px 14px 0;font-weight:700">🔴 Live Abhi</p><div class="stories">'+ids.map(id=>{
+    const i=+id.slice(1), L=S.live[id], g=S.groups[i];
+    return `<div class="story" onclick="openGroup(${i})" style="width:120px;cursor:pointer"><div class="av" style="width:84px;height:84px;background:linear-gradient(160deg,#ff9a3c,#ff2d7a);border-color:#e11d48;font-size:22px">${ini(L.host)}</div><span class="live" style="margin:4px 0 0">LIVE</span><b style="color:#fff;font-size:12px">${L.host}</b><span>${g.name} · ${L.viewers} 👁</span></div>`;
+  }).join('')+'</div>';
+}
+function renderLive(){
+  const grp=S.groups.map((g,i)=>({g,i,L:S.live[gid(i)]}));
+  const cnt=x=>x.L?x.L.viewers:x.g.members.replace(' Members','');
+  const card=x=>`<div onclick='openGroup(${x.i})' style='width:33%;text-align:center;padding:10px 4px 16px;cursor:pointer'><div style='width:96px;height:96px;margin:0 auto;border-radius:50%;background:${colorOf(x.g.name)};color:#fff;font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center;border:3px solid ${x.L?'#e11d48':'#fff'};position:relative'>${ini(x.g.name)}${x.L?"<span class='live' style='position:absolute;bottom:-8px;margin:0'>LIVE</span>":''}</div><div style='margin-top:12px;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>${x.g.name}</div><div style='color:#2563eb;font-size:13px;margin-top:4px'>👥 ${cnt(x)} ऑनलाइन</div></div>`;
+  const row=x=>`<div class='lvrow' onclick='openGroup(${x.i})'><div style='width:64px;height:64px;border-radius:50%;background:${colorOf(x.g.name)};color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0'>${ini(x.g.name)}</div><div style='flex:1;min-width:0'><div style='font-size:16px;font-weight:600'>${x.g.name}</div><div style='font-size:13px;color:#2563eb;margin-top:4px'>${cnt(x)} ऑनलाइन</div></div>${x.L?"<span style='background:#eef5ff;color:#e75a1b;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:600'>🔥 Trending 🔥</span>":''}<span style='font-size:22px;color:#777'>›</span></div>`;
+  document.getElementById('lvbody').innerHTML=`<div class='lvsec'>👥 Joined<a onclick="toast('Sab groups')">See All ›</a></div><div class='lvgrid'>${grp.slice(0,6).map(card).join('')}</div><div class='lvsec'>🌐 Popular</div>${grp.slice().sort((a,b)=>(b.L?1:0)-(a.L?1:0)).map(row).join('')}`;
+}
+function updateNavLive(){
+  const n=Object.keys(S.live).length;
+  document.getElementById('navlbl').innerHTML=n?'<b style="color:#e11d48">LIVE · '+n+'</b>':'Live';
+}
+function renderGroups(){
+  updateNavLive();
+  document.getElementById('grouplist').innerHTML=liveStrip()+S.groups.map((g,i)=>{
+    const L=S.live[gid(i)], R=S.rented[gid(i)];
+    return `<div class="item" onclick="openGroup(${i})">
+      <div class="av" style="background:${colorOf(g.name)};border-radius:14px">${ini(g.name)}</div>
+      <div class="grow"><div class="nm">${g.name}${L?' <span class="live">LIVE</span>':''}</div>
+        <div class="pv">${L?'🔴 '+L.host+' live hai · '+L.viewers+' viewers':g.members}</div></div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <button class="btn ${L?'red':'blue'} sm" onclick="event.stopPropagation();toggleLive(${i})">${L?'End Live':'Go Live'}</button>
+        <button class="btn ghost sm" onclick="event.stopPropagation();rentRoom(${i})">${R?'Rented ✅':'Rent Room 💎300'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openGroup(i){
+  const id=gid(i), g=S.groups[i];
+  if(!S.chats.find(c=>c.id===id))S.chats.push({id,name:g.name,last:'Group chat',time:'Now',unread:0,group:true});
+  S.currentChat=S.chats.find(c=>c.id===id);
+  go('voice');
+}
+function toggleLive(i){
+  const id=gid(i);
+  if(S.live[id]){delete S.live[id];toast('Live band kar diya')}
+  else{S.live[id]={host:'Sachin Kumar Sharma',viewers:1};toast('Aap live ho gaye 🔴')}
+  renderGroups();
+}
+function rentRoom(i){
+  const id=gid(i);
+  if(S.rented[id]){toast('Ye room pehle se rented hai');return}
+  if(S.dia<300){toast('Diamonds kam hain, recharge karo');return}
+  S.dia-=300;S.rented[id]=true;updateDia();renderGroups();toast('Chat room rent ho gaya (💎300)');
+}
+function liveBanner(L){
+  return `<div style="height:210px;border-radius:14px;margin:0 0 10px;background:linear-gradient(160deg,#ff9a3c,#3b1d7a 55%,#0b1030);position:relative;display:flex;align-items:flex-end;padding:12px;font-size:20px;font-weight:800"><span class="live" style="position:absolute;top:10px;left:10px;margin:0">LIVE</span><span style="position:absolute;top:10px;right:10px;font-size:12px">👁 ${L.viewers}</span>${L.host} ki live</div>`+liveBanner2(L);
+}
+function liveBanner2(L){
+  return `<div class="card" style="margin:0 0 10px;padding:10px 12px;display:flex;align-items:center;gap:10px"><span class="live" style="margin:0">LIVE</span><div style="flex:1"><b>${L.host}</b><div class="muted">${L.viewers} viewers</div></div><button class="btn red sm" onclick="joinLive()">Join Live</button></div>`;
+}
+function joinLive(){
+  const L=S.live[S.currentChat.id];
+  if(!L)return;
+  L.viewers++;toast('Live join ho gaya');renderMsgs();
+}
+
+function toggleJoin(){
+  S.joined=!S.joined;
+  document.getElementById('vjoin').textContent=S.joined?'Joined':'Join';
+  document.getElementById('vjoin').className=S.joined?'btn ghost':'btn blue';
+  if(S.joined){S.seats[7]={n:'You',mic:true,host:false};toast('Room join ho gaya')}
+  renderSeats();
+}
+function renderSeats(){
+  document.getElementById('seats').innerHTML=S.seats.map((s,i)=>`
+    <div class="seat ${s.host?'host':''}" onclick="toast('${s.empty?'Seat khaali hai':s.n}')">
+      ${s.empty?`<div class="av" style="background:#1b2350;border-style:dashed;color:#9aa3c7">+</div>`:av(s.n)}
+      <div>${s.host?'Host<br>':''}${s.empty?'':(i+1)+' '}${s.n==='You'?'You':s.n}</div>
+    </div>`).join('');
+}
+function toggleMic(){S.micOn=!S.micOn;document.getElementById('vmic').classList.toggle('on',S.micOn);toast(S.micOn?'Mic on':'Mic mute')}
+function leaveVoice(){S.joined=false;S.seats[7]={n:'Empty',empty:true};document.getElementById('vjoin').textContent='Join';document.getElementById('vjoin').className='btn blue';go('groups');toast('Room chhod diya')}
+function sendGift(name,price){
+  if(S.dia<price){toast('Diamonds kam hain, recharge karo');return}
+  S.dia-=price;updateDia();toast(`${name} bheja 🎁 (-${price}💎)`);
+}
+function updateDia(){document.getElementById('dia').textContent=S.dia.toLocaleString('en-IN');document.getElementById('dia2').textContent=S.dia.toLocaleString('en-IN')}
+function recharge(){S.dia+=500;updateDia();toast('+500 💎 mil gaye (demo)')}
+
+let giftMode='g';
+function giftTab(btn,mode){giftMode=mode;btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderGifts()}
+function renderGifts(){
+  const g=document.getElementById('giftgrid');
+  if(giftMode==='p'){
+    const pk=[[100,'₹19'],[500,'₹99'],[1200,'₹199'],[3000,'₹449'],[7000,'₹999']];
+    g.innerHTML=pk.map(([d,p])=>`<button class="gift" onclick="buyPack(${d})"><div class="e">💎</div><div class="n">${d} Diamonds</div><div class="p">${p}</div></button>`).join('');
+    return;
+  }
+  g.innerHTML=S.gifts.map(([n,e,p])=>`<button class="gift" onclick="sendGift('${n}',${p})"><div class="e">${e}</div><div class="n">${n}</div><div class="p">${p} 💎</div></button>`).join('');
+}
+function buyPack(d){S.dia+=d;updateDia();toast(`+${d} 💎 added (demo)`)}
+
+function rollDice(){const f=['⚀','⚁','⚂','⚃','⚄','⚅'];const r=Math.floor(Math.random()*6);document.getElementById('dice').textContent=f[r];toast('Dice: '+(r+1))}
+function quickMatch(){toast('Match dhoond rahe hain...');setTimeout(()=>toast('Player mil gaya! (demo)'),1500)}
+
+function publish(){
+  const t=document.getElementById('newpost').value.trim();if(!t){toast('Kuch likho pehle');return}
+  S.feed.unshift({id:Date.now(),name:'Sachin Kumar Sharma',time:'Abhi',text:t,likes:0,liked:false,comments:0,img:null});
+  document.getElementById('newpost').value='';toast('Post ho gaya ✅');go('home');
+}
+
+let callInt=null;
+function startVideo(){go('video');S.callSec=0;clearInterval(callInt);callInt=setInterval(()=>{S.callSec++;const m=String(Math.floor(S.callSec/60)).padStart(2,'0'),s=String(S.callSec%60).padStart(2,'0');document.getElementById('timer').textContent=m+':'+s},1000)}
+function endCall(){clearInterval(callInt);go('chat');toast('Call khatam')}
+
+let vlog=[{who:'Rohit',t:'Welcome everyone! 👋'},{who:'Neha',t:'Voice room is awesome!'},{who:'Aman',t:'Song play karo yaar 🎵'}];
+function vname(i){return i<0?(S.seats.find(s=>s.host)||S.seats[0]).n:S.seats[i].n}
+function renderVChat(){
+  document.getElementById('vchat').innerHTML=vlog.map(m=>`<div class='vr-line'><b>${m.who}</b> ${m.t}</div>`).join('');
+}
+function renderSeats(){
+  document.getElementById('seats').innerHTML=S.seats.map((s,i)=>{
+    if(s.empty)return `<div class='vr-seat' onclick='toggleJoin()'><div class='ring empty'>+</div><div class='vr-n'>${i+1}</div></div>`;
+    return `<div class='vr-seat' onclick='openGiftPanel(${i})'><div class='ring' style='background:${colorOf(s.n)}'>${ini(s.n)}</div><div class='vr-n'>${i+1} ${s.n}</div><span class='vr-mic'>${s.mic?'🎙️':'🔇'}</span></div>`;
+  }).join('');
+}
+function openGiftPanel(i){
+  const name=vname(i);
+  if(name==='You'){toast('Khud ko gift nahi bhej sakte');return}
+  document.querySelector('#sheet .sheet-h span').textContent='🎁 Gift bhejo → '+name;
+  document.getElementById('sheetg').innerHTML=S.gifts.map(([n,e,p],k)=>`<button onclick='sendVGift(${k},${i})'><span>${e}</span>${n}<small style='color:#8ab4ff'>${p} 💎</small></button>`).join('');
+  document.getElementById('sheet').classList.add('open');
+}
+function sendVGift(k,i){
+  const [n,e,p]=S.gifts[k];
+  closeSheet();
+  if(S.dia<p){toast('Diamonds kam hain, recharge karo');return}
+  S.dia-=p;updateDia();
+  const to=vname(i);
+  vlog.push({who:'You',t:`${e} ${n} bheja ${to} ko (-${p} 💎)`});
+  toast(`${e} ${n} bheja ${to} ko`);
+}
+function closeSheet(){
+  document.getElementById('sheet').classList.remove('open');
+  document.querySelector('#sheet .sheet-h span').textContent='Group Features';
+}
+vlog=[{who:'Cute Happy',t:'😂',lv:25,time:'12:20 AM'},{who:'Aja',t:'Good night bhai',lv:41,time:'12:23 AM'},{who:'Aja',t:'Tc',lv:41,time:'12:23 AM'}];
+function nowT(){return new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})}
+function renderVChat(){
+  const el=document.getElementById('vchat');
+  el.innerHTML=vlog.map(m=>`<div class='vm'><div class='vm-av' style='background:${colorOf(m.who)}'>${ini(m.who)}</div><div class='vm-b'><div class='vm-h'><b>${m.who}</b>${m.lv?`<span class='vm-lv'>Lv ${m.lv}</span>`:''}<span class='vm-t'>${m.time||''}</span></div><div style='margin-top:4px'>${m.t}</div></div></div>`).join('');
+  el.scrollTop=el.scrollHeight;
+  document.getElementById('vbal').textContent='💎 '+S.dia.toLocaleString('en-IN');
+}
+function renderSeats(){
+  const host=S.seats[0];
+  const slots=[];
+  slots.push(`<div class='vs-slot' onclick='openGiftPanel(-1)'><div class='vs-av' style='background:${colorOf(host.n)}'>${ini(host.n)}</div><div class='vs-n'>VIP ${host.n}</div></div>`);
+  slots.push(S.joined?`<div class='vs-slot' onclick='toggleJoin()'><div class='vs-av' style='background:#2f7bff'>ME</div><div class='vs-n'>You</div></div>`:`<div class='vs-slot' onclick='toggleJoin()'><div class='vs-req'>+</div><div class='vs-n'>Request</div></div>`);
+  for(let i=1;i<=6;i++){
+    const s=S.seats[i];
+    if(!s||s.empty)slots.push(`<div class='vs-slot' onclick='toggleJoin()'><div class='vs-dash'></div></div>`);
+    else slots.push(`<div class='vs-slot' onclick='openGiftPanel(${i})'><div class='vs-av' style='background:${colorOf(s.n)}'>${ini(s.n)}</div><div class='vs-n'>${s.n}</div></div>`);
+  }
+  document.getElementById('seats').innerHTML=slots.join('');
+  if(S.currentChat)document.getElementById('vtitle').textContent=S.currentChat.name;
+  document.getElementById('vonline').textContent=(S.joined?'3':'2')+' Online';
+  renderVChat();
+}
+function hidePin(){document.getElementById('vpin').style.display='none'}
+function toggleJoin(){
+  S.joined=!S.joined;
+  S.seats[7]=S.joined?{n:'You',mic:true}:{n:'Empty',empty:true};
+  toast(S.joined?'Seat le li (demo)':'Seat chhod di');
+  renderSeats();
+}
+function leaveVoice(){
+  S.joined=false;S.seats[7]={n:'Empty',empty:true};
+  go('live');
+}
+function sendVMsg(){
+  const el=document.getElementById('vinput');
+  const t=el.value.trim();if(!t)return;
+  vlog.push({who:'You',t,lv:1,time:nowT()});
+  el.value='';renderVChat();
+}
+function sendVGift(k,i){
+  const [n,e,p]=S.gifts[k];
+  closeSheet();
+  if(S.dia<p){toast('Diamonds kam hain, recharge karo');return}
+  S.dia-=p;updateDia();
+  const to=vname(i);
+  vlog.push({who:'You',t:`${e} ${n} bheja ${to} ko (-${p} 💎)`,lv:1,time:nowT()});
+  renderVChat();toast(`${e} ${n} bheja ${to} ko`);
+}
+let loginMode='mobile';
+const FB_CONFIG={apiKey:'AIzaSyAciOUtZsrDJ4Wll75PRiYFMAb4tUXbOUY',authDomain:'happy-life-2ec4d.firebaseapp.com',projectId:'happy-life-2ec4d',storageBucket:'happy-life-2ec4d.firebasestorage.app',messagingSenderId:'379055254671'};
+firebase.initializeApp(FB_CONFIG);
+const auth=firebase.auth();
+const db=firebase.firestore();
+let uid=null, confirmation=null, lastSaved='';
+function setLoginMode(m){
+  loginMode=m;
+  document.getElementById('lg-tab-m').classList.toggle('on',m==='mobile');
+  document.getElementById('lg-tab-e').classList.toggle('on',m==='email');
+  const f=document.getElementById('lg-id');
+  f.type=m==='mobile'?'tel':'email';
+  f.placeholder=m==='mobile'?'Mobile number (+91...)':'Email address';
+  f.value='';
+  document.getElementById('lg-pass').style.display=m==='email'?'block':'none';
+  document.getElementById('lg-otp-box').style.display='none';
+  document.getElementById('lg-send').textContent=m==='mobile'?'OTP bhejo':'Login / Register karo';
+}
+function errMsg(e){
+  const m={
+    'auth/invalid-phone-number':'Mobile number galat hai',
+    'auth/too-many-requests':'Bahut zyada koshish. Thodi der baad try karo',
+    'auth/quota-exceeded':'Aaj ke SMS khatam ho gaye. Firebase billing chahiye',
+    'auth/invalid-email':'Email galat hai',
+    'auth/weak-password':'Password kamzor hai (6 akshar ya zyada)',
+    'auth/email-already-in-use':'Ye email pehle se hai, sahi password daalo',
+    'auth/wrong-password':'Password galat hai',
+    'auth/operation-not-allowed':'Ye login method Firebase mein on nahi hai',
+    'auth/unauthorized-domain':'Ye domain Firebase mein authorized nahi hai',
+    'auth/invalid-verification-code':'OTP galat hai',
+    'auth/code-expired':'OTP expire ho gaya, dobara bhejo'
+  };
+  return m[e.code]||('Error: '+(e.message||e.code));
+}
+async function sendOtp(){
+  const v=document.getElementById('lg-id').value.trim();
+  try{
+    if(loginMode==='mobile'){
+      const d=v.replace(/\D/g,'');
+      if(d.length<10){toast('Sahi mobile number daalo');return}
+      try{if(window.recaptcha)window.recaptcha.clear()}catch(_){}document.getElementById('recaptcha-box').innerHTML='';window.recaptcha=new firebase.auth.RecaptchaVerifier('recaptcha-box',{size:'invisible'});
+      confirmation=await auth.signInWithPhoneNumber('+91'+d.slice(-10),window.recaptcha);
+      document.getElementById('lg-otp-box').style.display='block';
+      toast('OTP bheja gaya');
+    }else{
+      const p=document.getElementById('lg-pass').value;
+      if(!/^\S+@\S+\.\S+$/.test(v)){toast('Sahi email daalo');return}
+      if(p.length<6){toast('Password kam se kam 6 akshar ka ho');return}
+      try{
+        await auth.signInWithEmailAndPassword(v,p);
+      }catch(e){
+        if(e.code==='auth/user-not-found'||e.code==='auth/invalid-credential'){
+          await auth.createUserWithEmailAndPassword(v,p);
+        }else throw e;
+      }
+    }
+  }catch(e){
+    try{if(window.recaptcha)window.recaptcha.clear()}catch(_){}
+    window.recaptcha=null;
+    toast(errMsg(e));
+  }
+}
+async function doLogin(){
+  const o=document.getElementById('lg-otp').value.trim();
+  if(!confirmation){toast('Pehle OTP bhejo');return}
+  try{
+    await confirmation.confirm(o);
+    confirmation=null;
+  }catch(e){toast(errMsg(e))}
+}
+auth.onAuthStateChanged(async u=>{
+  if(u){
+    uid=u.uid;
+    try{
+      const snap=await db.collection('users').doc(uid).get();
+      if(snap.exists)applyData(snap.data());
+    }catch(e){}
+    S.user=u.phoneNumber||u.email||'User';
+    saveData();
+    renderSeats();
+    go('home');
+  }else{
+    uid=null;
+    S.user=null;
+    go('splash');
+  }
+});
+const KEY='happylife-v1';
+function saveData(){
+  const json=JSON.stringify({user:S.user,dia:S.dia,feed:S.feed,chats:S.chats,msgs:S.msgs,rented:S.rented,vlog:vlog});
+  if(json===lastSaved)return;
+  lastSaved=json;
+  try{localStorage.setItem(KEY,json)}catch(e){}
+  if(uid){db.collection('users').doc(uid).set(JSON.parse(json)).catch(()=>{})}
+}
+function applyData(d){
+  S.user=d.user===undefined?null:d.user;
+  S.dia=d.dia===undefined?S.dia:d.dia;
+  S.feed=d.feed||S.feed;S.chats=d.chats||S.chats;S.msgs=d.msgs||S.msgs;S.rented=d.rented||{};
+  if(d.vlog)vlog=d.vlog;
+  updateDia();
+}
+function loadData(){
+  try{
+    const d=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(!d)return false;
+    applyData(d);return true;
+  }catch(e){return false}
+}
+function makeBackup(){
+  document.getElementById('bk-text').value=JSON.stringify({app:'happylife',v:1,user:S.user,dia:S.dia,feed:S.feed,chats:S.chats,msgs:S.msgs,rented:S.rented,vlog:vlog});
+  toast('Backup ready - copy karo');
+}
+function restoreBackup(){
+  try{
+    const d=JSON.parse(document.getElementById('bk-text').value);
+    if(d.app!=='happylife'){toast('Ye Happy Life ka backup nahi hai');return}
+    applyData(d);saveData();toast('Data restore ho gaya');go('home');
+  }catch(e){toast('Backup text sahi nahi hai')}
+}
+renderSeats();
+setInterval(saveData,2000);
+addEventListener('pagehide',saveData);
+loadData();renderSeats();go('splash');
+</script>
+</body>
+</html>
